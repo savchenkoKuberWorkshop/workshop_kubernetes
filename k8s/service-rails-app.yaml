@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: rails-app-service
+  name: service-rails-app
 spec:
   selector:
     app: pod-rails-app

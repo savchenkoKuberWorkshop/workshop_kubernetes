@@ -16,8 +16,8 @@ WORKDIR $APP_HOME
 ENV RAILS_ENV="production" \
     BUNDLE_DEPLOYMENT="1" \
     BUNDLE_PATH="/usr/local/bundle" \
-    BUNDLE_WITHOUT="development"
-
+    BUNDLE_WITHOUT="development" \
+    RAILS_MASTER_KEY="ed741bb44e0eef06d78a74c23dba17ff"
 
 # Throw-away build stage to reduce size of final image
 FROM base as build

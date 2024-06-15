@@ -26,18 +26,16 @@ spec:
               mountPath: 'rails/config/config.json'
               subPath: 'config.json'
           env:
-            - name: FOO_KEY
-              value: 'FOO_VALUE'
-            - name: SECRET_KEY_BASE
+            - name: RAILS_MASTER_KEY
               valueFrom:
                 secretKeyRef:
-                  name: rails-app-secret
-                  key: secret_key_base
+                  name: app-secret
+                  key: rails_master_key
             - name: RAILS_ENV
               valueFrom:
                 configMapKeyRef:
-                  name: rails-app-config
-                  key: rails_env
+                  name: app-config
+                  key: RAILS_ENV
           ports:
             - containerPort: 3000
           command: ["./bin/rails"]
@@ -45,6 +43,5 @@ spec:
       volumes:
         - name: secret-volume
           secret:
-            secretName: rails-app-secret
+            secretName: app-secret
       restartPolicy: Always
-      

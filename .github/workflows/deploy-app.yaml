@@ -152,4 +152,3 @@ jobs:
           CR_NAME=${{ env.HELM_RELEASE_NAME }}
           REGISTRY_ID=$(yc container registry get --name "${CR_NAME}" --format json | jq -r .id)
           helm push $PACKAGE_NAME oci://cr.yandex/$REGISTRY_ID
-

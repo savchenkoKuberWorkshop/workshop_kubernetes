@@ -1,7 +1,7 @@
 replicaCount: 1
 
 image:
-  repository: cr.yandex/crpeajajv7qumuk1l1kj/hello-rails
+  repository: cr.yandex/crp6irmcifkn9v197nm0/rails-app
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
   tag: "0.0.10"
@@ -75,4 +75,4 @@ secret:
   data:
     config.json: ""
   stringData:
-    secret_key_base: ""
+    secret_key_base: "123123123"

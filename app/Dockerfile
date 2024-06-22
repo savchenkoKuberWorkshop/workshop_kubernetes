@@ -5,7 +5,7 @@
 #FROM registry.docker.com/library/ruby:$RUBY_VERSION-slim as base
 
 ARG RUBY_VERSION=3.3.1-jemalloc
-FROM quay.io/evl.ms/fullstaq-ruby:${RUBY_VERSION}-slim as base
+FROM quay.io/evl.ms/fullstaq-ruby:${RUBY_VERSION}-slim AS base
 
 ENV APP_HOME /rails
 
@@ -20,7 +20,7 @@ ENV RAILS_ENV="production" \
 
 
 # Throw-away build stage to reduce size of final image
-FROM base as build
+FROM base AS build
 
 # Install packages needed to build gems
 RUN apt-get update -qq && \

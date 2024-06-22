@@ -75,4 +75,4 @@ secret:
   data:
     config.json: ""
   stringData:
-    secret_key_base: ""
+    secret_key_base: "123123123"

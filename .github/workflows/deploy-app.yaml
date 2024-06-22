@@ -1,7 +1,8 @@
 name: Build and Deploy APP
 
 on:
-  workflow_dispatch:
+  - workflow_dispatch
+  - push
 
 env:
   HELM_RELEASE_NAME: demo

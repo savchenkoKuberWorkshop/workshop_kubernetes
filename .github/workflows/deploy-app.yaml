@@ -1,5 +1,7 @@
 name: Build and Deploy APP
-on: push
+on:
+  - push
+  - workflow_dispatch
 env:
   HELM_RELEASE_NAME: demo
   CR_REGISTRY: ${{ secrets.CR_REGISTRY }}

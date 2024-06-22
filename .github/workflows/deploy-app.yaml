@@ -2,10 +2,9 @@ name: Build and Deploy APP
 
 on:
   - workflow_dispatch
-  - push
 
 env:
-  HELM_RELEASE_NAME: demo
+  HELM_RELEASE_NAME: yc-demo-cr
   CR_REGISTRY: ${{ secrets.CR_REGISTRY }}
   CR_REPOSITORY: ${{ secrets.CR_REPOSITORY }}
   IMAGE_TAG: ${{ github.sha }}
@@ -65,7 +64,6 @@ jobs:
         working-directory: ./app
         run: |
           docker buildx build --cache-from type=local,src=/tmp/.buildx-cache --cache-to type=local,dest=/tmp/.buildx-cache --push -t cr.yandex/$CR_REGISTRY/$CR_REPOSITORY:${{ github.sha }} .
-
   lint:
     runs-on: ubuntu-latest
     steps:
@@ -153,3 +151,58 @@ jobs:
           CR_NAME=${{ env.HELM_RELEASE_NAME }}
           REGISTRY_ID=$(yc container registry get --name "${CR_NAME}" --format json | jq -r .id)
           helm push $PACKAGE_NAME oci://cr.yandex/$REGISTRY_ID
+  deploy-staging:
+    
+    runs-on: ubuntu-latest
+    needs:
+      - package
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Yandex Cloud CLI and Authenticate
+        uses: ./.github/actions/yc-cli-install
+        with:
+          yc_token: ${{ secrets.YC_TOKEN }}
+          yc_cloud_id: ${{ secrets.YC_CLOUD_ID }}
+          yc_folder_id: ${{ secrets.YC_FOLDER_ID }}
+
+      - name: Create Helm Secrets File
+        run: |
+          echo "${{ secrets.RAILS_APP_K8S_SECRET_STAGING }}" > ./rails-secrets-staging.yaml
+
+      - name: Download version file
+        uses: actions/download-artifact@v4
+        with:
+          name: version_without_v
+
+      - name: Read version without 'v'
+        id: read_version_without_v
+        run: echo "VERSION_WITHOUT_V=$(cat version_without_v.txt)" >> $GITHUB_ENV
+
+      - name: Download package name file
+        uses: actions/download-artifact@v4
+        with:
+          name: package-name
+
+      - name: Read package name
+        id: package-name
+        run: echo "PACKAGE_NAME=$(cat package_name.txt)" >> $GITHUB_ENV
+
+
+      - name: Login to Helm Registry (YC Container Registry)
+        run: |
+          export HELM_EXPERIMENTAL_OCI=1
+          yc iam create-token | helm registry login cr.yandex -u iam --password-stdin
+
+      - name: Pull Helm Chart from Yandex Cloud Container Registry
+        run: |
+          CR_NAME=${{ env.HELM_RELEASE_NAME }}
+          helm pull oci://cr.yandex/$CR_REGISTRY/$CR_REPOSITORY --version ${{ env.VERSION_WITHOUT_V }}
+
+      - name: Run Deploy
+        run: |
+          yc managed-kubernetes cluster get-credentials ${{ env.K8S_CLUSTER_NAME }} --external --force
+          helm upgrade --install demo-site-staging ./${{ env.PACKAGE_NAME }} -f ./rails-secrets-staging.yaml --set image.tag="${{ env.VERSION_WITHOUT_V }}"
+   

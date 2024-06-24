@@ -1,4 +1,4 @@
-name: Build and Deploy APP
+name: Build and Deploy APP Staging
 
 on:
   - workflow_dispatch
@@ -64,7 +64,6 @@ jobs:
         working-directory: ./app
         run: |
           docker buildx build --cache-from type=local,src=/tmp/.buildx-cache --cache-to type=local,dest=/tmp/.buildx-cache --push -t cr.yandex/$CR_REGISTRY/$CR_REPOSITORY:${{ github.sha }} .
-
   lint:
     runs-on: ubuntu-latest
     steps:
@@ -152,7 +151,7 @@ jobs:
           CR_NAME=${{ env.HELM_RELEASE_NAME }}
           REGISTRY_ID=$(yc container registry get --name "${CR_NAME}" --format json | jq -r .id)
           helm push $PACKAGE_NAME oci://cr.yandex/$REGISTRY_ID
-  deploy:
+  deploy-staging:
     runs-on: ubuntu-latest
     needs:
       - package
@@ -171,7 +170,7 @@ jobs:
 
       - name: Create Helm Secrets File
         run: |
-          echo "${{ secrets.RAILS_APP_K8S_SECRET }}" > ./rails-app-secrets.yaml
+          echo "${{ secrets.RAILS_APP_K8S_SECRET_STAGING }}" > ./rails-app-secrets-staging.yaml
 
       - name: Download version file
         uses: actions/download-artifact@v4
@@ -191,6 +190,7 @@ jobs:
         id: package-name
         run: echo "PACKAGE_NAME=$(cat package_name.txt)" >> $GITHUB_ENV
 
+
       - name: Login to Helm Registry (YC Container Registry)
         run: |
           export HELM_EXPERIMENTAL_OCI=1
@@ -203,5 +203,5 @@ jobs:
       - name: Run Deploy
         run: |
           yc managed-kubernetes cluster get-credentials ${{ env.K8S_CLUSTER_NAME }} --external --force
-          helm upgrade --install rails-app ./${{ env.PACKAGE_NAME }} -f ./rails-app-secrets.yaml --set image.tag='${{ env.VERSION_WITHOUT_V }}' --wait
+          helm upgrade --install rails-app-staging ./${{ env.PACKAGE_NAME }} -f ./rails-app-secrets-staging.yaml
    
